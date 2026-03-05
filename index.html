@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="ko" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>강촌 리튠(Re-Tune) 프로젝트 마스터플랜</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        
+        :root {
+            --primary: #D97757; /* Terracotta */
+            --secondary: #5A7D6C; /* Muted Green */
+            --dark-bg: #111312; /* Very dark green/gray */
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-main: #FDFBF7;
+            --text-muted: #A0AAB2;
+        }
+
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: var(--dark-bg);
+            color: var(--text-main);
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(217, 119, 87, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(90, 125, 108, 0.08), transparent 25%);
+            background-attachment: fixed;
+        }
+
+        /* Glassmorphism Classes */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-panel:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        .chart-container-glass {
+            position: relative;
+            width: 100%;
+            height: 350px;
+            max-height: 400px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .chart-container-glass {
+                height: 250px;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--dark-bg); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        /* Custom Selection */
+        ::selection {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Hero Image overlay */
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('hero_bg.png');
+            background-size: cover;
+            background-position: center;
+            z-index: -1;
+            opacity: 0.4;
+            mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+        }
+
+        /* Tab Styles */
+        .tab-btn {
+            transition: all 0.3s ease;
+            position: relative;
+            color: var(--text-muted);
+        }
+        .tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background-color: var(--primary);
+            transition: width 0.3s ease;
+        }
+        .tab-btn.active {
+            color: var(--text-main);
+            font-weight: 700;
+        }
+        .tab-btn.active::after {
+            width: 100%;
+        }
+        .tab-btn:hover {
+            color: var(--text-main);
+        }
+        
+        .tab-content { display: none; animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Gradients for text */
+        .text-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-image: linear-gradient(135deg, var(--primary), #e59c85);
+        }
+        .text-gradient-sec {
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-image: linear-gradient(135deg, #7ab096, var(--secondary));
+        }
+
+        /* Glowing dots */
+        .glow-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        /* Floating Animation */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .floating { animation: float 6s ease-in-out infinite; }
+        
+        /* Blur background nav */
+        .nav-blur {
+            background: rgba(17, 19, 18, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+    </style>
+</head>
+<body class="antialiased leading-relaxed">
+
+    <!-- Nav -->
+    <nav class="fixed w-full z-50 nav-blur transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex items-center gap-3">
+                    <i class="ph-fill ph-waveform text-3xl" style="color: var(--primary)"></i>
+                    <span class="text-xl font-black tracking-tighter text-gradient leading-none">GANGCHON<br>RE-TUNE</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-400">
+                    <a href="#status" class="hover:text-white transition-colors">현황 및 진단</a>
+                    <a href="#vision" class="hover:text-white transition-colors">비전 및 목표</a>
+                    <a href="#concept" class="hover:text-white transition-colors">페스티벌 컨셉</a>
+                    <a href="#ecosystem" class="hover:text-white transition-colors">지역 생태계</a>
+                    <a href="#programs" class="hover:text-white transition-colors">체험 프로그램</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="relative pt-40 pb-32 px-4 text-center min-h-[85vh] flex flex-col justify-center items-center">
+        <div class="hero-bg"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-[var(--dark-bg)] via-transparent to-transparent"></div>
+        
+        <div class="max-w-4xl mx-auto relative z-10 floating">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel mb-8 border-[var(--primary)]/30">
+                <span class="w-2 h-2 rounded-full bg-[var(--primary)] animate-pulse"></span>
+                <span class="text-xs font-semibold tracking-widest text-[var(--primary)] uppercase">2026 Masterplan</span>
+            </div>
+            
+            <h1 class="text-5xl md:text-7xl font-black mb-6 tracking-tight drop-shadow-2xl">
+                자연과 음악이 다시 만나는 곳,<br>
+                <span class="text-gradient">강촌 리튠 프로젝트</span>
+            </h1>
+            
+            <p class="text-lg md:text-2xl text-gray-300 mb-10 font-light max-w-3xl mx-auto drop-shadow-md">
+                한국판 우드스탁을 모티프로 한 대중음악 축제와 지역 상생형 부대행사를 통해,<br class="hidden md:block">
+                지속가능한 지역 문화생태계를 구축하기 위한 3개년 마스터플랜.
+            </p>
+            
+            <div class="flex flex-wrap justify-center gap-4">
+                <span class="px-5 py-2.5 rounded-full bg-[var(--secondary)]/20 text-[#7ab096] border border-[#7ab096]/30 text-sm font-medium backdrop-blur-sm"><i class="ph ph-leaf mr-2"></i>지역상생</span>
+                <span class="px-5 py-2.5 rounded-full bg-[var(--primary)]/20 text-[#e59c85] border border-[#e59c85]/30 text-sm font-medium backdrop-blur-sm"><i class="ph ph-recycle mr-2"></i>지속가능성</span>
+                <span class="px-5 py-2.5 rounded-full bg-white/10 text-white border border-white/20 text-sm font-medium backdrop-blur-sm"><i class="ph ph-guitars mr-2"></i>음악축제</span>
+            </div>
+            
+            <div class="mt-20 text-gray-500 animate-bounce">
+                <p class="text-xs uppercase tracking-widest mb-2">Scroll to explore</p>
+                <i class="ph ph-arrow-down text-xl"></i>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-40 relative z-10">
+
+        <!-- Section A: SWOT -->
+        <section id="status" class="scroll-mt-32">
+            <div class="mb-16 text-center max-w-3xl mx-auto">
+                <h2 class="text-xs font-bold tracking-widest text-[var(--secondary)] uppercase mb-2">Section A</h2>
+                <h3 class="text-3xl md:text-4xl font-bold mb-6">현황 및 <span class="text-gradient-sec">SWOT 진단</span></h3>
+                <p class="text-gray-400 font-light">강촌의 현재 인구구조, 상권 특성, 접근성 및 보유 자원을 분석하여 방향성을 도출합니다.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+                <!-- Background decoration -->
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[var(--primary)]/5 rounded-full blur-[100px] -z-10"></div>
+
+                <div class="glass-panel p-8 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-bl-full -z-10 transition-transform group-hover:scale-150 duration-500"></div>
+                    <div class="flex items-center gap-3 mb-6">
+                        <i class="ph-fill ph-trend-up text-3xl text-blue-400"></i>
+                        <h3 class="text-2xl font-black text-white tracking-wider">STRENGTHS <span class="text-sm font-normal text-gray-400 ml-2">강점</span></h3>
+                    </div>
+                    <ul class="space-y-4 text-gray-300 font-light">
+                        <li class="flex items-start"><i class="ph-fill ph-check-circle text-blue-400 mr-3 mt-1 text-lg"></i> 수려한 자연경관 (북한강, 구곡폭포)</li>
+                        <li class="flex items-start"><i class="ph-fill ph-check-circle text-blue-400 mr-3 mt-1 text-lg"></i> 수도권 접근성 (ITX 청춘, 고속도로)</li>
+                        <li class="flex items-start"><i class="ph-fill ph-check-circle text-blue-400 mr-3 mt-1 text-lg"></i> 기존 MT 문화 등 젊음의 상징적 역사</li>
+                    </ul>
+                </div>
+
+                <div class="glass-panel p-8 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-bl-full -z-10 transition-transform group-hover:scale-150 duration-500"></div>
+                    <div class="flex items-center gap-3 mb-6">
+                        <i class="ph-fill ph-trend-down text-3xl text-red-400"></i>
+                        <h3 class="text-2xl font-black text-white tracking-wider">WEAKNESSES <span class="text-sm font-normal text-gray-400 ml-2">약점</span></h3>
+                    </div>
+                    <ul class="space-y-4 text-gray-300 font-light">
+                        <li class="flex items-start"><i class="ph-fill ph-warning-circle text-red-400 mr-3 mt-1 text-lg"></i> 상권 노후화 및 다양성 부족</li>
+                        <li class="flex items-start"><i class="ph-fill ph-warning-circle text-red-400 mr-3 mt-1 text-lg"></i> 청년 인구 유출 및 고령화 심화</li>
+                        <li class="flex items-start"><i class="ph-fill ph-warning-circle text-red-400 mr-3 mt-1 text-lg"></i> 체류형 관광 인프라(숙박 등) 부족</li>
+                    </ul>
+                </div>
+
+                <div class="glass-panel p-8 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-bl-full -z-10 transition-transform group-hover:scale-150 duration-500"></div>
+                    <div class="flex items-center gap-3 mb-6">
+                        <i class="ph-fill ph-lightbulb text-3xl text-green-400"></i>
+                        <h3 class="text-2xl font-black text-white tracking-wider">OPPORTUNITIES <span class="text-sm font-normal text-gray-400 ml-2">기회</span></h3>
+                    </div>
+                    <ul class="space-y-4 text-gray-300 font-light">
+                        <li class="flex items-start"><i class="ph-fill ph-arrow-circle-up text-green-400 mr-3 mt-1 text-lg"></i> 로컬 여행 및 친환경 관광 트렌드 확산</li>
+                        <li class="flex items-start"><i class="ph-fill ph-arrow-circle-up text-green-400 mr-3 mt-1 text-lg"></i> 장르 불문 음악 페스티벌 수요 증가</li>
+                        <li class="flex items-start"><i class="ph-fill ph-arrow-circle-up text-green-400 mr-3 mt-1 text-lg"></i> 지자체의 지역 소멸 대응 지원 정책</li>
+                    </ul>
+                </div>
+
+                <div class="glass-panel p-8 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-bl-full -z-10 transition-transform group-hover:scale-150 duration-500"></div>
+                    <div class="flex items-center gap-3 mb-6">
+                        <i class="ph-fill ph-shield-warning text-3xl text-orange-400"></i>
+                        <h3 class="text-2xl font-black text-white tracking-wider">THREATS <span class="text-sm font-normal text-gray-400 ml-2">위협</span></h3>
+                    </div>
+                    <ul class="space-y-4 text-gray-300 font-light">
+                        <li class="flex items-start"><i class="ph-fill ph-shield text-orange-400 mr-3 mt-1 text-lg"></i> 타 지역 유사 축제와의 경쟁 심화</li>
+                        <li class="flex items-start"><i class="ph-fill ph-shield text-orange-400 mr-3 mt-1 text-lg"></i> 기상 이변(폭우 등)으로 인한 리스크</li>
+                        <li class="flex items-start"><i class="ph-fill ph-shield text-orange-400 mr-3 mt-1 text-lg"></i> 관광객 증가로 인한 환경 훼손 우려</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section B: Vision -->
+        <section id="vision" class="scroll-mt-32">
+            <div class="mb-16 text-center max-w-3xl mx-auto">
+                <h2 class="text-xs font-bold tracking-widest text-[var(--primary)] uppercase mb-2">Section B</h2>
+                <h3 class="text-3xl md:text-4xl font-bold mb-6">비전 및 <span class="text-gradient">3개년 목표</span></h3>
+                <p class="text-gray-400 font-light">단순한 1회성 축제가 아닌, 강촌의 브랜드를 근본적으로 변화시키는 3년의 로드맵입니다.</p>
+            </div>
+
+            <div class="glass-panel p-8 md:p-12 relative overflow-hidden">
+                <!-- Abstract background shapes -->
+                <div class="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djIwaGMtMTEuMDQ2IDAtMjAtOC45NTQtMjAtMjBNMzYgMzRWMTRjMTEuMDQ2IDAgMjAgOC45NTQgMjAgMjBNMzYgMzRoLTIwYy0uMDAxLTExLjA0NiA4Ljk1My0yMCAxOS45OTktMjBWMzR6IiBmaWxsLXJ1bGU9Im5vbnplcm8iLz48L2c+PC9nPjwvc3ZnPg==')] opacity-10"></div>
+                
+                <div class="text-center mb-12 relative z-10">
+                    <h3 class="text-2xl md:text-3xl font-bold text-white mb-3 tracking-tight">"다양성이 공명하는 자연 속 문화 발전소"</h3>
+                    <p class="text-gray-400 font-light">도심의 외연 확장을 넘어선 자생적 로컬 브랜드 구축</p>
+                </div>
+                
+                <div class="chart-container-glass mb-16 shadow-[inset_0_2px_20px_rgba(0,0,0,0.5)]">
+                    <canvas id="roadmapChart"></canvas>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center relative z-10">
+                    <div class="p-6 bg-black/30 rounded-2xl border border-white/5 backdrop-blur-sm group hover:border-[var(--primary)]/50 transition-colors">
+                        <i class="ph ph-users text-3xl text-gray-500 mb-2 group-hover:text-[var(--primary)] transition-colors"></i>
+                        <div class="text-sm text-gray-400 mb-2">목표 방문객 (3년)</div>
+                        <div class="text-3xl font-black text-white">150K<span class="text-xl text-[var(--primary)]">+</span></div>
+                    </div>
+                    <div class="p-6 bg-black/30 rounded-2xl border border-white/5 backdrop-blur-sm group hover:border-[var(--secondary)]/50 transition-colors">
+                        <i class="ph ph-trend-up text-3xl text-gray-500 mb-2 group-hover:text-[var(--secondary)] transition-colors"></i>
+                        <div class="text-sm text-gray-400 mb-2">지역 매출 증가율</div>
+                        <div class="text-3xl font-black text-white">250<span class="text-xl text-[var(--secondary)]">%</span></div>
+                    </div>
+                    <div class="p-6 bg-black/30 rounded-2xl border border-white/5 backdrop-blur-sm group hover:border-blue-400/50 transition-colors">
+                        <i class="ph ph-star text-3xl text-gray-500 mb-2 group-hover:text-blue-400 transition-colors"></i>
+                        <div class="text-sm text-gray-400 mb-2">브랜드 인지도</div>
+                        <div class="text-3xl font-black text-white">Top 5</div>
+                    </div>
+                    <div class="p-6 bg-black/30 rounded-2xl border border-white/5 backdrop-blur-sm group hover:border-green-400/50 transition-colors">
+                        <i class="ph ph-leaf text-3xl text-gray-500 mb-2 group-hover:text-green-400 transition-colors"></i>
+                        <div class="text-sm text-gray-400 mb-2">제로 웨이스트</div>
+                        <div class="text-3xl font-black text-white">85<span class="text-xl text-green-400">%</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section C: Concept -->
+        <section id="concept" class="scroll-mt-32">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <h2 class="text-xs font-bold tracking-widest text-[var(--secondary)] uppercase mb-2">Section C</h2>
+                    <h3 class="text-3xl md:text-4xl font-bold mb-6">페스티벌 컨셉 : <span class="text-gradient">한국판 우드스탁</span></h3>
+                    <p class="text-gray-400 font-light mb-10 leading-relaxed text-lg">
+                        장르의 벽을 허물고 세대가 통합되는 2~3일간의 참여형 음악 축제. 메인 무대 외에도 강촌의 자연을 활용한 야외 문화마당, 친환경 캠페인이 결합된 복합 문화 포맷입니다.
+                    </p>
+
+                    <div class="space-y-8">
+                        <div class="flex gap-5 group">
+                            <div class="w-12 h-12 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center shrink-0 border border-[var(--primary)]/30 group-hover:bg-[var(--primary)] transition-colors">
+                                <i class="ph ph-music-notes text-2xl text-[var(--primary)] group-hover:text-white transition-colors"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-bold text-white mb-2">장르 믹스 & 다양성</h4>
+                                <p class="text-gray-400 font-light leading-relaxed">록을 기반으로 하되 포크, 블루스, 인디 음악, 그리고 지역 전통음악(농악 등)을 크로스오버하여 독특한 사운드스케이프 조성.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5 group">
+                            <div class="w-12 h-12 rounded-xl bg-[var(--secondary)]/10 flex items-center justify-center shrink-0 border border-[var(--secondary)]/30 group-hover:bg-[var(--secondary)] transition-colors">
+                                <i class="ph ph-recycle text-2xl text-[var(--secondary)] group-hover:text-white transition-colors"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-bold text-white mb-2">철저한 환경 지속가능성</h4>
+                                <p class="text-gray-400 font-light leading-relaxed">친환경 소재 무대 디자인, 다회용기 렌탈 시스템, 관객 참여형 플로깅(Plogging) 및 대중교통(ITX) 연계.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5 group">
+                            <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0 border border-purple-500/30 group-hover:bg-purple-500 transition-colors">
+                                <i class="ph ph-tent text-2xl text-purple-400 group-hover:text-white transition-colors"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-bold text-white mb-2">체류형 포맷</h4>
+                                <p class="text-gray-400 font-light leading-relaxed">당일치기를 넘어 캠핑존 및 지역 숙박시설과의 연계 패키지를 통해 야간 경제 활성화를 도모.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="glass-panel p-8 md:p-10 flex flex-col justify-center relative">
+                    <div class="absolute -top-10 -right-10 w-40 h-40 bg-[var(--primary)]/20 rounded-full blur-[50px] -z-10"></div>
+                    <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-[var(--secondary)]/20 rounded-full blur-[50px] -z-10"></div>
+                    
+                    <div class="flex items-center justify-between mb-8">
+                        <h4 class="font-bold text-white text-lg">음악 장르 구성 비율</h4>
+                        <span class="px-3 py-1 rounded-md bg-white/10 text-xs text-gray-300 font-medium border border-white/5">Target Mix</span>
+                    </div>
+                    <div class="chart-container-glass bg-transparent border-none shadow-none !h-[300px]">
+                        <canvas id="genreChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section D: Ecosystem -->
+        <section id="ecosystem" class="scroll-mt-32">
+            <div class="mb-16 text-center max-w-3xl mx-auto">
+                <h2 class="text-xs font-bold tracking-widest text-blue-400 uppercase mb-2">Section D & E</h2>
+                <h3 class="text-3xl md:text-4xl font-bold mb-6">생태계 구축 및 <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">운영모델</span></h3>
+                <p class="text-gray-400 font-light">주민이 단순한 관찰자가 아닌 주최자가 되는 구조입니다. 참여와 환원의 선순환 모델을 구축합니다.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                <div class="lg:col-span-3 glass-panel p-8 md:p-10 flex flex-col">
+                    <h3 class="text-xl font-bold mb-8 text-white flex items-center gap-2">
+                        <i class="ph-fill ph-circles-three text-[var(--primary)]"></i> 거버넌스 & 파트너십
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-grow">
+                        <!-- Card 1 -->
+                        <div class="p-5 bg-black/40 rounded-xl border border-white/5 hover:border-[var(--primary)]/30 transition-colors group">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-8 h-8 rounded-full bg-[var(--primary)]/20 flex items-center justify-center">
+                                    <i class="ph-fill ph-users-three text-[var(--primary)] text-sm"></i>
+                                </div>
+                                <div class="font-bold text-white group-hover:text-[var(--primary)] transition-colors">주민 위원회</div>
+                            </div>
+                            <p class="text-sm text-gray-400 font-light">의사결정 참여, 부스 운영 가이드라인 제정, 자원봉사자 조직화</p>
+                        </div>
+                        
+                        <!-- Card 2 -->
+                        <div class="p-5 bg-black/40 rounded-xl border border-white/5 hover:border-[var(--secondary)]/30 transition-colors group">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-8 h-8 rounded-full bg-[var(--secondary)]/20 flex items-center justify-center">
+                                    <i class="ph-fill ph-storefront text-[var(--secondary)] text-sm"></i>
+                                </div>
+                                <div class="font-bold text-white group-hover:text-[var(--secondary)] transition-colors">지역 상권 & 농가</div>
+                            </div>
+                            <p class="text-sm text-gray-400 font-light">식음료 부스 우선 입점, 농·특산물 직거래 마켓 운영, 숙박 연계</p>
+                        </div>
+                        
+                        <!-- Card 3 -->
+                        <div class="p-5 bg-black/40 rounded-xl border border-white/5 hover:border-blue-400/30 transition-colors group">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                                    <i class="ph-fill ph-palette text-blue-400 text-sm"></i>
+                                </div>
+                                <div class="font-bold text-white group-hover:text-blue-400 transition-colors">대학 & 예술단체</div>
+                            </div>
+                            <p class="text-sm text-gray-400 font-light">프리쇼 퍼포먼스 기획, 무대 디자인 참여, 학생 서포터즈 운영</p>
+                        </div>
+                        
+                        <!-- Card 4 -->
+                        <div class="p-5 bg-black/40 rounded-xl border border-white/5 hover:border-purple-400/30 transition-colors group">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
+                                    <i class="ph-fill ph-shield-check text-purple-400 text-sm"></i>
+                                </div>
+                                <div class="font-bold text-white group-hover:text-purple-400 transition-colors">리스크 관리팀</div>
+                            </div>
+                            <p class="text-sm text-gray-400 font-light">안전 동선 확보, 우천 대비 메뉴얼, 인파 분산 시스템 가동</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lg:col-span-2 glass-panel p-8 md:p-10 flex flex-col justify-center">
+                    <div class="flex items-center justify-between mb-8">
+                        <h4 class="font-bold text-white text-lg">예상 수익원 구성</h4>
+                        <i class="ph ph-chart-bar text-[var(--secondary)] text-xl"></i>
+                    </div>
+                    <div class="chart-container-glass bg-transparent border-none shadow-none !px-0 !h-[300px]">
+                        <canvas id="budgetChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section F: Programs (Tabs) -->
+        <section id="programs" class="scroll-mt-32">
+            <div class="mb-12 text-center max-w-3xl mx-auto">
+                <h2 class="text-xs font-bold tracking-widest text-[#e59c85] uppercase mb-2">Section F</h2>
+                <h3 class="text-3xl md:text-4xl font-bold mb-6">마케팅 및 <span class="bg-clip-text text-transparent bg-gradient-to-r from-[#e59c85] to-[#f2c75c]">체험 프로그램</span></h3>
+            </div>
+
+            <div class="glass-panel overflow-hidden p-2">
+                <!-- Tab Header -->
+                <div class="flex border-b border-white/10 overflow-x-auto hide-scrollbar p-2 gap-2">
+                    <button class="tab-btn active px-6 py-4 rounded-xl text-sm font-medium focus:outline-none whitespace-nowrap bg-white/5 hover:bg-white/10 flex items-center gap-2" onclick="openTab(event, 'tab-music')">
+                        <i class="ph ph-headphones text-lg"></i> 음악 & 워크숍
+                    </button>
+                    <button class="tab-btn px-6 py-4 rounded-xl text-sm font-medium focus:outline-none whitespace-nowrap bg-transparent hover:bg-white/5 flex items-center gap-2" onclick="openTab(event, 'tab-local')">
+                        <i class="ph ph-storefront text-lg"></i> 로컬 문화 & 마켓
+                    </button>
+                    <button class="tab-btn px-6 py-4 rounded-xl text-sm font-medium focus:outline-none whitespace-nowrap bg-transparent hover:bg-white/5 flex items-center gap-2" onclick="openTab(event, 'tab-eco')">
+                        <i class="ph ph-plant text-lg"></i> 친환경 캠페인
+                    </button>
+                    <button class="tab-btn px-6 py-4 rounded-xl text-sm font-medium focus:outline-none whitespace-nowrap bg-transparent hover:bg-white/5 flex items-center gap-2" onclick="openTab(event, 'tab-marketing')">
+                        <i class="ph ph-megaphone text-lg"></i> 타깃 & 브랜딩
+                    </button>
+                </div>
+
+                <!-- Tab Contents -->
+                <div class="p-6 md:p-10 min-h-[350px]">
+                    
+                    <!-- Tab 1 -->
+                    <div id="tab-music" class="tab-content active h-full">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--primary)] to-orange-400 flex items-center justify-center">
+                                <i class="ph-fill ph-speaker-hifi text-white text-2xl"></i>
+                            </div>
+                            <h3 class="text-3xl font-bold text-white">관객 참여형 음악 워크숍</h3>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div class="bg-black/30 p-8 rounded-2xl border border-white/5 hover:border-[var(--primary)]/30 transition-all">
+                                <h4 class="font-bold text-xl mb-3 text-white flex items-center gap-2">
+                                    <i class="ph-fill ph-guitar text-[var(--primary)]"></i> 나도 록스타: 악기 체험존
+                                </h4>
+                                <p class="text-gray-400 font-light leading-relaxed">전문 연주자들의 지도 아래 드럼, 일렉기타 등 밴드 악기를 직접 만져보고 간단한 리프를 배워보는 인터랙티브 공간.</p>
+                            </div>
+                            <div class="bg-black/30 p-8 rounded-2xl border border-white/5 hover:border-[var(--primary)]/30 transition-all">
+                                <h4 class="font-bold text-xl mb-3 text-white flex items-center gap-2">
+                                    <i class="ph-fill ph-microphone-stage text-[var(--primary)]"></i> 강촌 사운드 레코딩
+                                </h4>
+                                <p class="text-gray-400 font-light leading-relaxed">자연의 소리(물소리, 새소리)와 관객의 목소리를 믹싱하여 나만의 짧은 음원을 만들어보는 디지털 오디오 체험 부스.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2 -->
+                    <div id="tab-local" class="tab-content h-full">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--secondary)] to-emerald-400 flex items-center justify-center">
+                                <i class="ph-fill ph-fork-knife text-white text-2xl"></i>
+                            </div>
+                            <h3 class="text-3xl font-bold text-white">지역 상생 마켓 & 다이닝</h3>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div class="bg-black/30 p-8 rounded-2xl border border-white/5 hover:border-[var(--secondary)]/30 transition-all">
+                                <h4 class="font-bold text-xl mb-3 text-white flex items-center gap-2">
+                                    <i class="ph-fill ph-cooking-pot text-[var(--secondary)]"></i> 강촌 미식 로드 (팜투테이블)
+                                </h4>
+                                <p class="text-gray-400 font-light leading-relaxed">지역 대표 음식의 퓨전화 메뉴. 지역 농가에서 당일 수확한 신선한 재료로 만든 프리미엄 로컬 푸드존 구성.</p>
+                            </div>
+                            <div class="bg-black/30 p-8 rounded-2xl border border-white/5 hover:border-[var(--secondary)]/30 transition-all">
+                                <h4 class="font-bold text-xl mb-3 text-white flex items-center gap-2">
+                                    <i class="ph-fill ph-tote text-[var(--secondary)]"></i> 로컬 크리에이터 플리마켓
+                                </h4>
+                                <p class="text-gray-400 font-light leading-relaxed">춘천 및 강원 지역의 젊은 예술가, 공예가들이 만든 굿즈와 전통 문화를 세련되게 재해석한 아트 마켓.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 3 -->
+                    <div id="tab-eco" class="tab-content h-full">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-500 to-teal-400 flex items-center justify-center">
+                                <i class="ph-fill ph-globe-hemisphere-west text-white text-2xl"></i>
+                            </div>
+                            <h3 class="text-3xl font-bold text-white">지구를 위한 페스티벌</h3>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div class="bg-black/30 p-8 rounded-2xl border border-white/5 hover:border-green-400/30 transition-all">
+                                <h4 class="font-bold text-xl mb-3 text-white flex items-center gap-2">
+                                    <i class="ph-fill ph-trash text-green-400"></i> 트래쉬 버스터즈
+                                </h4>
+                                <p class="text-gray-400 font-light leading-relaxed">관객들이 직접 분리수거 및 쓰레기 줍기 미션을 수행하면 페스티벌 스페셜 굿즈나 식음료 베네핏으로 교환해주는 게이미피케이션.</p>
+                            </div>
+                            <div class="bg-black/30 p-8 rounded-2xl border border-white/5 hover:border-green-400/30 transition-all">
+                                <h4 class="font-bold text-xl mb-3 text-white flex items-center gap-2">
+                                    <i class="ph-fill ph-paint-brush text-green-400"></i> 업사이클링 아트 월
+                                </h4>
+                                <p class="text-gray-400 font-light leading-relaxed">버려지는 폐현수막, 플라스틱 병을 활용하여 관객과 유명 설치미술가가 함께 대형 야외 조형물을 완성하는 라이브 아트.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 4 -->
+                    <div id="tab-marketing" class="tab-content h-full">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
+                                <i class="ph-fill ph-target text-white text-2xl"></i>
+                            </div>
+                            <h3 class="text-3xl font-bold text-white">커뮤니케이션 & 타깃 전략</h3>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="bg-black/30 p-6 rounded-2xl border border-white/5 flex gap-4 items-start">
+                                <div class="bg-blue-500/10 text-blue-400 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider shrink-0 mt-1border border-blue-500/20">Target</div>
+                                <div>
+                                    <h5 class="text-white font-bold mb-1">핵심 타깃 페르소나</h5>
+                                    <p class="text-gray-400 font-light text-sm">2030 수도권 세대의 문화/예술 향유자 및 이색적인 자연 속 오프라인 경험을 추구하는 커뮤니티.</p>
+                                </div>
+                            </div>
+                            <div class="bg-black/30 p-6 rounded-2xl border border-white/5 flex gap-4 items-start">
+                                <div class="bg-purple-500/10 text-purple-400 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider shrink-0 mt-1 border border-purple-500/20">Story</div>
+                                <div>
+                                    <h5 class="text-white font-bold mb-1">헤리티지 스토리텔링</h5>
+                                    <p class="text-gray-400 font-light text-sm">"MT의 성지 강촌, 완전히 새로운 주파수(Re-Tune)로 세대를 아우르다." 과거의 향수와 현대적 트렌드의 결합.</p>
+                                </div>
+                            </div>
+                            <div class="bg-black/30 p-6 rounded-2xl border border-white/5 flex gap-4 items-start">
+                                <div class="bg-pink-500/10 text-pink-400 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider shrink-0 mt-1 border border-pink-500/20">Media</div>
+                                <div>
+                                    <h5 class="text-white font-bold mb-1">멀티채널 바이럴</h5>
+                                    <p class="text-gray-400 font-light text-sm">감각적인 숏폼 중심의 아티스트 라인업 티징, 코레일(ITX) 연계 오프라인 팝업 프로모션 전개.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+        
+        <!-- Section H: Impact -->
+        <section id="impact" class="pt-20 pb-10 border-t border-white/10 relative">
+            <!-- Glow background -->
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-gradient-to-b from-[var(--primary)]/5 to-transparent blur-[100px] -z-10 pointer-events-none"></div>
+
+            <div class="text-center mb-16">
+                <h3 class="text-3xl md:text-5xl font-black mb-6 text-white drop-shadow-md">종합 기대 효과</h3>
+                <p class="text-gray-400 font-light max-w-2xl mx-auto text-lg">경제, 브랜드, 환경, 사회 전반에 걸친 입체적 로컬 르네상스 지표</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center max-w-5xl mx-auto">
+                <div class="chart-container-glass !h-[450px] !bg-black/40 relative">
+                    <canvas id="impactChart"></canvas>
+                </div>
+                
+                <div class="space-y-6">
+                    <div class="glass-panel p-6 border-l-4 !border-l-blue-500 hover:bg-white/5 transition-colors">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="ph-fill ph-coin text-blue-400 text-xl"></i>
+                            <h4 class="font-bold text-white text-lg">경제적 파급 (Economy)</h4>
+                        </div>
+                        <p class="text-sm font-light text-gray-400 pl-8">지역 상가 매출 증대, 신규 고용 창출(기획, 운영, 숙박 등), 로컬 브랜드 유통 채널 확보</p>
+                    </div>
+                    
+                    <div class="glass-panel p-6 border-l-4 !border-l-[var(--primary)] hover:bg-white/5 transition-colors">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="ph-fill ph-sparkle text-[var(--primary)] text-xl"></i>
+                            <h4 class="font-bold text-white text-lg">브랜드 혁신 (Brand)</h4>
+                        </div>
+                        <p class="text-sm font-light text-gray-400 pl-8">'낙후된 관광지'에서 '가장 트렌디한 자연 속 문화 거점'으로 국가적 인식 전환</p>
+                    </div>
+                    
+                    <div class="glass-panel p-6 border-l-4 !border-l-[var(--secondary)] hover:bg-white/5 transition-colors">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="ph-fill ph-tree text-[var(--secondary)] text-xl"></i>
+                            <h4 class="font-bold text-white text-lg">생태적 지속성 (Environment)</h4>
+                        </div>
+                        <p class="text-sm font-light text-gray-400 pl-8">탄소 배출 최소화 대형 행사 국제 표준 모델 제시, 거버넌스 기반 환경 보호식 정착</p>
+                    </div>
+                    
+                    <div class="glass-panel p-6 border-l-4 !border-l-purple-500 hover:bg-white/5 transition-colors">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="ph-fill ph-hands-clapping text-purple-400 text-xl"></i>
+                            <h4 class="font-bold text-white text-lg">사회적 자본 (Social)</h4>
+                        </div>
+                        <p class="text-sm font-light text-gray-400 pl-8">청년-시니어 세대 결합 프로젝트 경험, 자부심 회복 및 자발적 로컬 크리에이터 유입</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="border-t border-white/5 bg-black/50 backdrop-blur-md text-gray-400 py-16 text-center mt-20 relative z-10">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="flex items-center justify-center gap-2 mb-6 opacity-30">
+                <i class="ph-fill ph-waveform text-4xl"></i>
+            </div>
+            <p class="font-light tracking-wide text-gray-500 mb-2">© 2026 Gangchon Re-Tune Project. Interactive Masterplan.</p>
+            <p class="text-sm text-gray-600 font-light">이 문서는 강촌 지역경제 활성화 및 지속가능한 로컬 브랜딩을 위한 전략 제안서입니다.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 50) {
+                nav.classList.add('shadow-lg');
+                nav.style.background = 'rgba(17, 19, 18, 0.85)';
+            } else {
+                nav.classList.remove('shadow-lg');
+                nav.style.background = 'rgba(17, 19, 18, 0.5)';
+            }
+        });
+
+        // Custom Tab Functionality (to match glassmorphism style)
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+                tabcontent[i].classList.remove("active");
+            }
+            tablinks = document.getElementsByClassName("tab-btn");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].classList.remove("active");
+                tablinks[i].classList.remove("bg-white/5");
+                tablinks[i].classList.add("bg-transparent");
+            }
+            document.getElementById(tabName).style.display = "block";
+            // slight delay to trigger animation
+            setTimeout(() => {
+                document.getElementById(tabName).classList.add("active");
+            }, 10);
+            
+            evt.currentTarget.classList.add("active");
+            evt.currentTarget.classList.remove("bg-transparent");
+            evt.currentTarget.classList.add("bg-white/5");
+        }
+
+        // Initialize Charts when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            Chart.defaults.font.family = "'Pretendard', sans-serif";
+            Chart.defaults.color = 'rgba(255, 255, 255, 0.6)';
+            Chart.defaults.scale.grid.color = 'rgba(255, 255, 255, 0.05)';
+
+            // Set colors from CSS variables essentially
+            const colPrimary = '#D97757';
+            const colSecondary = '#5A7D6C';
+            const colWhite = '#FDFBF7';
+
+            // 1. Roadmap Chart (Line)
+            const ctxRoadmap = document.getElementById('roadmapChart').getContext('2d');
+            
+            // Create Gradient for Line
+            let gradientLine = ctxRoadmap.createLinearGradient(0, 0, 0, 400);
+            gradientLine.addColorStop(0, 'rgba(217, 119, 87, 0.5)');   
+            gradientLine.addColorStop(1, 'rgba(217, 119, 87, 0.0)');
+
+            new Chart(ctxRoadmap, {
+                type: 'line',
+                data: {
+                    labels: ['런칭 (1년차)', '확장 (2년차)', '오리지널리티 (3년차)'],
+                    datasets: [
+                        {
+                            label: '예상 방문객 수 (명)',
+                            data: [35000, 90000, 150000],
+                            borderColor: colPrimary,
+                            backgroundColor: gradientLine,
+                            borderWidth: 3,
+                            pointBackgroundColor: colWhite,
+                            pointBorderColor: colPrimary,
+                            pointBorderWidth: 2,
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            fill: true,
+                            tension: 0.4,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: '지역 매출 증가율 (%)',
+                            data: [60, 140, 250],
+                            borderColor: colSecondary,
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointBackgroundColor: colSecondary,
+                            pointBorderColor: colWhite,
+                            pointRadius: 5,
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: { 
+                            position: 'top',
+                            labels: { color: 'rgba(255, 255, 255, 0.8)', usePointStyle: true, boxWidth: 8 }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 19, 18, 0.9)',
+                            titleColor: '#fff',
+                            bodyColor: '#e2ded3',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: true,
+                            boxPadding: 4
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: '방문객 수', color: 'rgba(255,255,255,0.5)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            title: { display: true, text: '매출 증가율 (%)', color: 'rgba(255,255,255,0.5)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            // 2. Genre Mix Chart (Doughnut)
+            const ctxGenre = document.getElementById('genreChart').getContext('2d');
+            new Chart(ctxGenre, {
+                type: 'doughnut',
+                data: {
+                    labels: ['모던 록&팝', '인디&포크', '로컬 크로스오버', '블루스&재즈'],
+                    datasets: [{
+                        data: [45, 25, 15, 15],
+                        backgroundColor: [colPrimary, '#e59c85', colSecondary, '#3b5548'],
+                        borderWidth: 2,
+                        borderColor: '#111312',
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: { 
+                            position: 'right', 
+                            labels: { color: 'rgba(255,255,255,0.8)', padding: 15, usePointStyle: true }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17,19,18,0.9)',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1
+                        }
+                    }
+                }
+            });
+
+            // 3. Budget Chart (Bar)
+            const ctxBudget = document.getElementById('budgetChart').getContext('2d');
+            
+            let gradientBar = ctxBudget.createLinearGradient(0, 0, 0, 300);
+            gradientBar.addColorStop(0, '#7ab096');   
+            gradientBar.addColorStop(1, '#3b5548');
+
+            new Chart(ctxBudget, {
+                type: 'bar',
+                data: {
+                    labels: ['티켓\n판매', '기업\n스폰서', 'F&B\n부스', '지자체\n지원', 'MD\n상품'],
+                    datasets: [{
+                        label: '수익 비중 (%)',
+                        data: [40, 25, 15, 10, 10],
+                        backgroundColor: gradientBar,
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: 'rgba(17,19,18,0.9)', borderColor: 'rgba(255,255,255,0.1)', borderWidth:1 }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            max: 50, 
+                            ticks: { callback: function(value) { return value + "%" } } 
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { maxRotation: 0, autoSkip: false }
+                        }
+                    }
+                }
+            });
+
+            // 4. Impact Chart (Radar)
+            const ctxImpact = document.getElementById('impactChart').getContext('2d');
+            new Chart(ctxImpact, {
+                type: 'radar',
+                data: {
+                    labels: ['경제 활성화', '브랜드 가치', '환경 지속성', '주민 만족도', '관광객 재방문율'],
+                    datasets: [{
+                        label: 'Before (현재)',
+                        data: [30, 40, 50, 40, 30],
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        pointBackgroundColor: 'rgba(255, 255, 255, 0.3)',
+                        borderWidth: 1,
+                        borderDash: [5, 5]
+                    }, {
+                        label: 'After (목표)',
+                        data: [90, 85, 80, 95, 85],
+                        backgroundColor: 'rgba(217, 119, 87, 0.2)',
+                        borderColor: colPrimary,
+                        pointBackgroundColor: colWhite,
+                        pointBorderColor: colPrimary,
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 6,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            pointLabels: { color: 'rgba(255, 255, 255, 0.8)', font: { size: 13, weight: '500' } },
+                            suggestedMin: 0,
+                            suggestedMax: 100,
+                            ticks: { showLabelBackdrop: false, color: 'rgba(255, 255, 255, 0.3)', stepSize: 20 }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: 'rgba(255, 255, 255, 0.7)', usePointStyle: true } },
+                        tooltip: { backgroundColor: 'rgba(17,19,18,0.9)', borderColor: 'rgba(255,255,255,0.1)', borderWidth:1 }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
